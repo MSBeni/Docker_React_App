@@ -1,0 +1,22 @@
+sudo: required
+services:
+  - docker
+
+before_install:
+  - docker build -t msbeni/react-test -f ./client/Dockerfile.dev ./client
+
+script:
+  - docker run msbeni/react-test npm test -- --coverage
+
+after_success:
+  - docker build -t msbeni/multi-client ./client
+  - docker build -t msbeni/multi-nginx ./nginx
+  - docker build -t msbeni/multi-server ./server
+  - docker build -t msbeni/multi-worker ./worker
+  # Log in to the cocker CLI
+  - echo "$DOCKER_PASSWORD" | docker login -u "$DOCKER_ID" --password-stdin
+  # Take those images and push them to docker hub
+  - docker push msbeni/multi-client
+  - docker push msbeni/multi-nginx
+  - docker push msbeni/multi-server
+  - docker push msbeni/multi-worker
